@@ -2,6 +2,10 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include <chrono>
+
+const int MAXN = 1e8;
+const int MAX_COORD = 1e5;
 
 // Return -1 if a < b, 0 if a = b and 1 if a > b.
 int cmp_double(double a, double b = 0, double eps = 1e-9) {
@@ -97,7 +101,6 @@ Circle heuristicMinCircle(const std::vector<Point>& pointList) {
     int iMax = 0, jMax = 0;
     double maxDistance = 0.0;
     for(int i = 0; i < 4; i++) {
-		std::cout << furthestPointList[i].x << ", " << furthestPointList[i].y << '\n';
         for(int j = 0; j < 4; j++) {
             double currentDistance = euclideanDistance(furthestPointList[i], furthestPointList[j]);
             if(cmp_double(maxDistance, currentDistance) < 0) {
@@ -107,8 +110,6 @@ Circle heuristicMinCircle(const std::vector<Point>& pointList) {
             }
         }
     }
-	std::cout << furthestPointList[iMax].x << ", " << furthestPointList[iMax].y << '\n';
-	std::cout << furthestPointList[jMax].x << ", " << furthestPointList[jMax].y << '\n';
 
 	Circle resultCircle = getCircleGivenTwoPoints(furthestPointList[iMax], furthestPointList[jMax]);
 	for (auto& point : pointList) {
@@ -128,18 +129,15 @@ Circle minCircleWithTwoPoints(const std::vector<Point>& pointList, const Point& 
     // base case
     if (n == 0) return Circle();
 
-    std::vector<Circle> circleList(n+1);
-    circleList[0] = getCircleGivenTwoPoints(q1, q2);
-    for (int i = 1; i <= n; i++) {
-        if(inCircle(circleList[i-1], pointList[i-1])) {
-            circleList[i] = circleList[i - 1];
-        } else {
-            Point circleCenter = circumCenter(pointList[i-1], q1, q2);
+    Circle minCircle = getCircleGivenTwoPoints(q1, q2);
+    for (int i = 0; i < n; i++) {
+        if(!inCircle(minCircle, pointList[i])) {
+            Point circleCenter = circumCenter(pointList[i], q1, q2);
             double circleRadius = euclideanDistance(circleCenter, q1);
-            circleList[i] = Circle(circleCenter, circleRadius);
+            minCircle = Circle(circleCenter, circleRadius);
         }
     }
-    return circleList[n];
+    return minCircle;
 }
 
 Circle minCircleWithPoint(const std::vector<Point>& pointList, const Point& q) {
@@ -149,20 +147,17 @@ Circle minCircleWithPoint(const std::vector<Point>& pointList, const Point& q) {
 
 	std::vector<Circle> circleList(n);
     std::vector<Point> pointSubList{pointList[0]};
-	circleList[0] = getCircleGivenTwoPoints(pointList[0], q);
+	Circle minCircle = getCircleGivenTwoPoints(pointList[0], q);
 	for (int i = 1; i < n; i++) {
-        if (inCircle(circleList[i-1], pointList[i])) {
-            circleList[i] = circleList[i - 1];
-        }
-        else {
-          circleList[i] = minCircleWithTwoPoints(pointSubList, pointList[i], q);
+        if (!inCircle(minCircle, pointList[i])) {
+          minCircle = minCircleWithTwoPoints(pointSubList, pointList[i], q);
         }
         pointSubList.emplace_back(pointList[i]);
 	}
-    return circleList[n-1];
+    return minCircle;
 }
 
-Circle deterministicMinCircle(const std::vector<Point>& pointList) {
+Circle smallestEnclosingCircle(const std::vector<Point>& pointList) {
 	int n = (int) pointList.size();
 	// base cases
 	if (n == 0) return Circle();
@@ -170,24 +165,26 @@ Circle deterministicMinCircle(const std::vector<Point>& pointList) {
 
 	std::vector<Point> shufflePointList = pointList;
 	std::random_shuffle(shufflePointList.begin(), shufflePointList.end());
-	std::vector<Circle> circleList(n);
+
     std::vector<Point> shufflePointSubList{shufflePointList[0], shufflePointList[1]};
-	circleList[1] = getCircleGivenTwoPoints(shufflePointList[0], shufflePointList[1]);
+	Circle minCircle = getCircleGivenTwoPoints(shufflePointList[0], shufflePointList[1]);
 	for (int i = 2; i < n; i++) {
-		if (inCircle(circleList[i-1], shufflePointList[i])) {
-			circleList[i] = circleList[i - 1];
-		}
-		else {
-		  circleList[i] = minCircleWithPoint(shufflePointSubList, shufflePointList[i]);
+		if (!inCircle(minCircle, shufflePointList[i])) {
+		  minCircle = minCircleWithPoint(shufflePointSubList, shufflePointList[i]);
 		}
         shufflePointSubList.emplace_back(shufflePointList[i]);
 	}
-    return circleList[n-1];
+    return minCircle;
 }
 
 
-vector<Point> generateRandomPointList(int n) {
-
+std::vector<Point> generateRandomPointList(int n, int maxCoord) {
+    std::vector<Point> result(n);
+    for(int i = 0; i < n; i++) {
+        // points with coordinates between 1 and 1000
+        result[i] = Point(rand() % maxCoord + 1, rand() % maxCoord + 1);
+    }
+    return result;
 }
 
 int main() {
@@ -205,14 +202,48 @@ int main() {
         pointList.emplace_back(Point(x, y));
     }
 	Circle heuristicCircle = heuristicMinCircle(pointList);
-	std::cout << "Heuristic Circle center: " << heuristicCircle.p.x << ", " << heuristicCircle.p.y << '\n';
-	std::cout << "Heuristic Circle radius: " << heuristicCircle.r << '\n';
+	std::cout << "Heuristic circle center: " << heuristicCircle.p.x << ", " << heuristicCircle.p.y << '\n';
+	std::cout << "Heuristic circle radius: " << heuristicCircle.r << '\n';
 	std::cout << "Points outside circle: " << countPointListOutsideCircle(heuristicCircle, pointList) << '\n';
 
-    Circle deterministicCircle = deterministicMinCircle(pointList);
-    std::cout << "Deterministic Circle center: " << deterministicCircle.p.x << ", " << deterministicCircle.p.y << '\n';
-    std::cout << "Deterministic Circle radius: " << deterministicCircle.r << '\n';
-    std::cout << "Points outside circle: " << countPointListOutsideCircle(deterministicCircle, pointList) << '\n';
+    std::cout << '\n';
+
+    Circle minCircle = smallestEnclosingCircle(pointList);
+    std::cout << "Smallest enclosing circle center: " << minCircle.p.x << ", " << minCircle.p.y << '\n';
+    std::cout << "Smallest enclosing circle radius: " << minCircle.r << '\n';
+    std::cout << "Points outside circle: " << countPointListOutsideCircle(minCircle, pointList) << '\n';
+
+    std::cout << '\n';
+
+    std::cout << "Testing with different number of points, randomly generated" << '\n';
+    std::chrono::steady_clock::time_point begin;
+    std::chrono::steady_clock::time_point end;
+    for(int i = 1000; i <= MAXN; i *= 10) {
+        std::cout << "n = " << i << '\n';
+        std::vector<Point> pointList = generateRandomPointList(i, MAX_COORD);
+
+        begin = std::chrono::steady_clock::now();
+        Circle heuristicCircle = heuristicMinCircle(pointList);
+        end = std::chrono::steady_clock::now();
+
+        std::cout << "Heuristic execution time = " << std::chrono::duration_cast<std::chrono::milliseconds> (end - begin).count() << "[ms]" << '\n';
+        std::cout << "Heuristic circle center: " << heuristicCircle.p.x << ", " << heuristicCircle.p.y << '\n';
+        std::cout << "Heuristic circle radius: " << heuristicCircle.r << '\n';
+        std::cout << "Points outside circle: " << countPointListOutsideCircle(heuristicCircle, pointList) << '\n';
+
+        std::cout << '\n';
+
+        begin = std::chrono::steady_clock::now();
+        Circle minCircle = smallestEnclosingCircle(pointList);
+        end = std::chrono::steady_clock::now();
+
+        std::cout << "Smallest enclosing circle execution time = " << std::chrono::duration_cast<std::chrono::milliseconds> (end - begin).count() << "[ms]" << '\n';
+        std::cout << "Smallest enclosing circle center: " << minCircle.p.x << ", " << minCircle.p.y << '\n';
+        std::cout << "Smallest enclosing circle radius: " << minCircle.r << '\n';
+        std::cout << "Points outside circle: " << countPointListOutsideCircle(minCircle, pointList) << '\n';
+
+        std::cout << "\n\n\n";
+    }
 
     return 0;
 }
