@@ -18,6 +18,7 @@ struct Point {
     Point operator* (const double &o) const { return Point(x * o, y * o); }
     Point operator/ (const double &o) const { return Point(x / o, y / o); }
     double operator* (const Point &o) const { return x * o.x + y * o.y; }
+    double operator% (const Point &o) const { return x * o.y - o.x * y; }
     bool operator== (const Point &o) const {
         return cmp_double(x, o.x) == 0 && cmp_double(y, o.y) == 0;
     }
@@ -46,6 +47,12 @@ struct Circle {
 bool inCircle(const Circle &c, const Point &p) {
 	return cmp_double(abs(c.p - p), c.r) <= 0;
 }
+
+Point circumCenter(Point p, Point q, Point r) {
+    Point a = p - r, b = q - r, c = Point(a*(p+r)/2, b*(q+r)/2);
+    return Point(c % Point(a.y, b.y), Point(a.x, b.x) % c)/(a % b);
+}
+
 
 Circle getCircleGivenTwoPoints(const Point& p1, const Point& p2) {
 	Point circleCenter = (p1 + p2) / 2.0;
@@ -116,20 +123,47 @@ Circle heuristicMinCircle(const std::vector<Point>& pointList) {
 	return resultCircle;
 }
 
+Circle minCircleWithTwoPoints(const std::vector<Point>& pointList, const Point& q1, const Point& q2) {
+    int n = (int) pointList.size();
+    // base case
+    if (n == 0) return Circle();
+
+    std::vector<Circle> circleList(n+1);
+    circleList[0] = getCircleGivenTwoPoints(q1, q2);
+    for (int i = 1; i <= n; i++) {
+        if(inCircle(circleList[i-1], pointList[i-1])) {
+            circleList[i] = circleList[i - 1];
+        } else {
+            Point circleCenter = circumCenter(pointList[i-1], q1, q2);
+            double circleRadius = euclideanDistance(circleCenter, q1);
+            circleList[i] = Circle(circleCenter, circleRadius);
+        }
+    }
+    return circleList[n];
+}
+
 Circle minCircleWithPoint(const std::vector<Point>& pointList, const Point& q) {
-	int n = (int)pointList.size();
+	int n = (int) pointList.size();
 	// base case
 	if (n == 0) return Circle();
 
 	std::vector<Circle> circleList(n);
+    std::vector<Point> pointSubList{pointList[0]};
 	circleList[0] = getCircleGivenTwoPoints(pointList[0], q);
 	for (int i = 1; i < n; i++) {
-
+        if (inCircle(circleList[i-1], pointList[i])) {
+            circleList[i] = circleList[i - 1];
+        }
+        else {
+          circleList[i] = minCircleWithTwoPoints(pointSubList, pointList[i], q);
+        }
+        pointSubList.emplace_back(pointList[i]);
 	}
+    return circleList[n-1];
 }
 
 Circle deterministicMinCircle(const std::vector<Point>& pointList) {
-	int n = (int)pointList.size();
+	int n = (int) pointList.size();
 	// base cases
 	if (n == 0) return Circle();
 	if (n == 1) return Circle(pointList[0], 0);
@@ -137,22 +171,28 @@ Circle deterministicMinCircle(const std::vector<Point>& pointList) {
 	std::vector<Point> shufflePointList = pointList;
 	std::random_shuffle(shufflePointList.begin(), shufflePointList.end());
 	std::vector<Circle> circleList(n);
-	circleList[1] = getCircleGivenTwoPoints(pointList[0], pointList[1]);
+    std::vector<Point> shufflePointSubList{shufflePointList[0], shufflePointList[1]};
+	circleList[1] = getCircleGivenTwoPoints(shufflePointList[0], shufflePointList[1]);
 	for (int i = 2; i < n; i++) {
-		if (inCircle(circleList[i-1], pointList[i])) {
+		if (inCircle(circleList[i-1], shufflePointList[i])) {
 			circleList[i] = circleList[i - 1];
 		}
 		else {
-		
+		  circleList[i] = minCircleWithPoint(shufflePointSubList, shufflePointList[i]);
 		}
+        shufflePointSubList.emplace_back(shufflePointList[i]);
 	}
+    return circleList[n-1];
 }
 
 
+vector<Point> generateRandomPointList(int n) {
+
+}
 
 int main() {
     std::ifstream inFile;
-    
+
     inFile.open("points.txt");
     if (!inFile) {
         std::cout << "Unable to open file\n";
@@ -168,7 +208,12 @@ int main() {
 	std::cout << "Heuristic Circle center: " << heuristicCircle.p.x << ", " << heuristicCircle.p.y << '\n';
 	std::cout << "Heuristic Circle radius: " << heuristicCircle.r << '\n';
 	std::cout << "Points outside circle: " << countPointListOutsideCircle(heuristicCircle, pointList) << '\n';
-    
+
+    Circle deterministicCircle = deterministicMinCircle(pointList);
+    std::cout << "Deterministic Circle center: " << deterministicCircle.p.x << ", " << deterministicCircle.p.y << '\n';
+    std::cout << "Deterministic Circle radius: " << deterministicCircle.r << '\n';
+    std::cout << "Points outside circle: " << countPointListOutsideCircle(deterministicCircle, pointList) << '\n';
+
     return 0;
 }
 
