@@ -2,7 +2,7 @@
 #include <fstream>
 #include <utility>
 #include <vector>
-#include <unordered_set>
+#include <queue>
 
 // Return -1 if a < b, 0 if a = b and 1 if a > b.
 int cmp_double(double a, double b = 0, double eps = 1e-9) {
@@ -25,9 +25,9 @@ struct Point {
     }
 };
 
-// Return true if a->b->c is counterclockwise and false otherwise
-bool ccw(Point p, Point q, Point r) {
-    return cmp_double((q - p) % (r - p)) > 0;
+// Return 1 if a->b->c is counterclockwise, -1 if it is clockwise and 0 otherwise
+int ccw(Point p, Point q, Point r) {
+    return cmp_double((q - p) % (r - p));
 }
 
 int getNextIndex(int i, int n, std::vector<bool>& activeVertices) {
@@ -52,16 +52,17 @@ int getLastIndex(int i, int n, std::vector<bool>& activeVertices) {
 }
 
 bool checkPointInsideTriangle(Point t1, Point t2, Point t3, Point p) {
-    bool ccw1 = ccw(t1, t2, p);
-    bool ccw2 = ccw(t2, t3, p);
-    bool ccw3 = ccw(t3, t1, p);
-    return ccw1 && ccw2 && ccw3;
+    int ccw1 = ccw(t1, t2, p);
+    int ccw2 = ccw(t2, t3, p);
+    int ccw3 = ccw(t3, t1, p);
+    return ccw1 >= 0 && ccw2 >= 0 && ccw3 >= 0;
 }
 
-bool checkDiagonal(const std::vector<Point>& poly, int index1, int index2, int index3) {
+bool checkDiagonal(const std::vector<Point>& poly, int index1, int index2, int index3, std::vector<bool>& activeVertices) {
+    if(ccw(poly[index1], poly[index2], poly[index3]) <= 0) return false;
     int n = (int) poly.size();
     for(int i = 0; i < n; i++) {
-        if(i != index1 && i != index2, i != index3 &&
+        if(i != index1 && i != index2 && i != index3 && activeVertices[i] &&
             checkPointInsideTriangle(poly[index1], poly[index2], poly[index3], poly[i])) {
             return false;
         }
@@ -72,37 +73,36 @@ bool checkDiagonal(const std::vector<Point>& poly, int index1, int index2, int i
 bool checkEar(const std::vector<Point>& poly, int index, std::vector<bool>& activeVertices) {
     int n = (int) poly.size();
     int lastIndex = getLastIndex(index, n, activeVertices), nextIndex = getNextIndex(index, n, activeVertices);
-    return checkDiagonal(poly, lastIndex, index, nextIndex);
+    return checkDiagonal(poly, lastIndex, index, nextIndex, activeVertices);
 }
 
 std::vector<std::pair<int, int>> earClippingTriangulation(const std::vector<Point>& poly) {
     std::vector<std::pair<int, int>> triangulation;
     int n = (int) poly.size();
 	std::vector<bool> activeVertices(n, true);
-    std::unordered_set<int> earSet;
-    // determine if each vertex is a ear
+    std::queue<int> earQueue;
+
+    // determine which vertices are ears
     for(int i = 0; i < n; i++) {
         if(checkEar(poly, i, activeVertices)) {
-            earSet.emplace(i);
+            earQueue.emplace(i);
         }
     }
 
-    // removing ears
+    // removing ears from poly
     int currentPolySize = n;
-    while(currentPolySize > 3 && !earSet.empty()) {
-        int i = *(earSet.begin());
-        earSet.erase(earSet.begin());
+    while(currentPolySize > 3 && !earQueue.empty()) {
+        int i = earQueue.front();
+        earQueue.pop();
+        if(!activeVertices[i] || !checkEar(poly, i, activeVertices)) continue;
 		activeVertices[i] = false;
         currentPolySize--;
         int lastIndex = getLastIndex(i, n, activeVertices), nextIndex = getNextIndex(i, n, activeVertices);
         triangulation.emplace_back(std::make_pair(lastIndex, nextIndex));
-        // TODO lidar com o problema do vertice ser removido do poligono
         std::vector<int> updateIndexes{lastIndex, nextIndex};
         for(auto& updateIndex : updateIndexes) {
-            if(checkEar(poly, updateIndex, activeVertices) && !earSet.count(updateIndex)) {
-            earSet.emplace(updateIndex);
-            } else if(!checkEar(poly, updateIndex, activeVertices) && earSet.count(updateIndex)) {
-                earSet.erase(updateIndex);
+            if(checkEar(poly, updateIndex, activeVertices)) {
+                earQueue.emplace(updateIndex);
             }
         }
     }
@@ -111,7 +111,7 @@ std::vector<std::pair<int, int>> earClippingTriangulation(const std::vector<Poin
 
 int main() {
     std::ifstream inFile;
-    std::vector<std::string> polygonFiles{"polygon1.txt", "polygon2.txt"};
+    std::vector<std::string> polygonFiles{"polygon2.txt"};
 
     for(auto& polygonFile : polygonFiles) {
         inFile.open(polygonFile);
@@ -125,11 +125,9 @@ int main() {
             poly.emplace_back(Point(x, y));
         }
         std::vector<std::pair<int, int>> triangulation = earClippingTriangulation(poly);
-        std::cout << "Polygon: " << polygonFile << '\n';
         for(auto& p : triangulation) {
-            std::cout << p.first << " " << p.second << '\n';
+            std::cout << std::min(p.first, p.second) << " " << std::max(p.first, p.second) << '\n';
         }
-        std::cout << '\n';
         inFile.close();
     }
 
