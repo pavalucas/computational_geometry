@@ -99,9 +99,9 @@ void createPointCloudFile(int n, std::vector<Point> pointList) {
     outFile.close();
 }
 
-void createConvexHullFile(int n, std::vector<int> convexHullIndexes) {
+void createConvexHullFile(std::string name, std::vector<int> convexHullIndexes) {
     std::ofstream outFile;
-    outFile.open("convexHull" + std::to_string(n) + ".txt");
+    outFile.open(name);
     for(auto& p : convexHullIndexes) {
         outFile << p << '\n';
     }
@@ -114,6 +114,7 @@ int main() {
     std::vector<std::string> pointFiles{"nuvem1.txt", "nuvem2.txt"};
 
     std::cout << "Testing with given point files" << '\n';
+    int fileNum = 1;
     for(auto& file : pointFiles) {
         inFile.open(file);
         if (!inFile) {
@@ -129,12 +130,15 @@ int main() {
 
         std::vector<Point> convexHullPoints = convexHullGrahamScan(pointList);
         std::vector<int> convexHullIndexes = getConvexHulIndexes(pointList, convexHullPoints);
+        std::string name = "fecho" + std::to_string(fileNum) + ".txt";
+        createConvexHullFile(name, convexHullIndexes);
         std::cout << "Convex hull indexes for " << file << ":" << '\n';
         for(auto& p : convexHullIndexes) {
             std::cout << p << '\n';
         }
         std::cout << '\n';
         inFile.close();
+        fileNum++;
     }
 
 
@@ -150,13 +154,19 @@ int main() {
         begin = std::chrono::steady_clock::now();
         std::vector<Point> convexHullPoints = convexHullGrahamScan(pointList);
         end = std::chrono::steady_clock::now();
-
         std::cout << "Convex hull Graham Scan execution time = " << std::chrono::duration_cast<std::chrono::milliseconds> (end - begin).count() << "[ms]" << '\n';
+
+        std::vector<Point> tmpPointList = pointList;
+        begin = std::chrono::steady_clock::now();
+        sort(tmpPointList.begin(), tmpPointList.end());
+        end = std::chrono::steady_clock::now();
+        std::cout << "Sort point list execution time = " << std::chrono::duration_cast<std::chrono::milliseconds> (end - begin).count() << "[ms]" << '\n';
 
         createPointCloudFile(i, pointList);
 
         std::vector<int> convexHullIndexes = getConvexHulIndexes(pointList, convexHullPoints);
-        createConvexHullFile(i, convexHullIndexes);
+        std::string name = "convexHull" + std::to_string(i) + ".txt";
+        createConvexHullFile(name, convexHullIndexes);
 
         std::cout << "\n\n";
     }
