@@ -8,3 +8,4 @@
 ## Projects
 
 - Project 1: [Convex hull](projects/project1)
+- Project 2: [Delaunay triangulation](projects/project2)
