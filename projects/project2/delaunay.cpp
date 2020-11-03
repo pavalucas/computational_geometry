@@ -259,7 +259,7 @@ int main() {
     std::cout << "Testing with different number of points, randomly generated" << '\n';
     std::chrono::steady_clock::time_point begin;
     std::chrono::steady_clock::time_point end;
-    std::vector<double> randomPointCloudSize{1e2, 5*1e2, 1e3, 5*1e3, 1e4};
+    std::vector<double> randomPointCloudSize{30, 70, 1e2, 3*1e2, 7*1e2, 1e3, 3*1e3, 7*1e3, 1e4};
     for(int i : randomPointCloudSize) {
         std::cout << "n = " << i << '\n';
         std::vector<Point> pointList = generateRandomPointList(i, STD_DEV);
