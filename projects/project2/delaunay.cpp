@@ -156,12 +156,12 @@ class Delaunay {
                 maxY = std::max(maxY, p.y);
             }
 
-            double halfSide = std::max(maxX - minX, maxY - minY) / 2.0;
+            double halfSide = std::max(maxX - minX, maxY - minY);
             double midX = (maxX + minX) / 2.0;
             double midY = (maxY + minY) / 2.0;
-            Point a = Point(midX - 3.0 * halfSide, midY - 3.0 * halfSide);
-            Point b = Point(midX, midY + 3.0 * halfSide);
-            Point c = Point(midX + 3.0 * halfSide, midY);
+            Point a = Point(midX - 20.0 * halfSide, midY - 20.0 * halfSide);
+            Point b = Point(midX, midY + 20.0 * halfSide);
+            Point c = Point(midX + 20.0 * halfSide, midY);
             return Triangle(a, b, c);
         }
 
