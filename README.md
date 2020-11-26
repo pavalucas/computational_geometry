@@ -9,3 +9,5 @@
 
 - Project 1: [Convex hull](projects/project1)
 - Project 2: [Delaunay triangulation](projects/project2)
+
+## Final project: [Regular grid and K-d tree](final_project)
