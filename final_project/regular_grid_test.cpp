@@ -25,22 +25,22 @@ int main()
 
         int numPointInList = 0;
         int numPointNotInList = 0;
-        // begin = std::chrono::steady_clock::now();
-        // for (int i = 0; i < pointList.size(); i += 2)
-        // {
-        //     Point modifiedPoint = pointList[i];
-        //     modifiedPoint.coord[0] += 0.5;
-        //     modifiedPoint.coord[1] += 0.5;
-        //     if(searchPoint(root, pointList[i])) numPointInList++;
-        //     else numPointNotInList++;
+        begin = std::chrono::steady_clock::now();
+        for (int i = 0; i < pointList.size(); i += 2)
+        {
+            Point modifiedPoint = pointList[i];
+            modifiedPoint.coord[0] += 0.5;
+            modifiedPoint.coord[1] += 0.5;
+            if(grid.searchPoint(pointList[i])) numPointInList++;
+            else numPointNotInList++;
             
-        //     if(searchPoint(root, modifiedPoint)) numPointInList++;
-        //     else numPointNotInList++; 
-        // }
-        // end = std::chrono::steady_clock::now();
-        // std::cout << "Search points = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]\n";
-        // std::cout << "Number of points in list = " << numPointInList << '\n';
-        // std::cout << "Number of points not in list = " << numPointNotInList << '\n';
+            if(grid.searchPoint(modifiedPoint)) numPointInList++;
+            else numPointNotInList++; 
+        }
+        end = std::chrono::steady_clock::now();
+        std::cout << "Search points = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]\n";
+        std::cout << "Number of points in list = " << numPointInList << '\n';
+        std::cout << "Number of points not in list = " << numPointNotInList << '\n';
 
     }
     return 0;

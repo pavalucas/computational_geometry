@@ -66,4 +66,20 @@ struct RegularGrid
             cellPointsList[pointIdx] = -1;
         }
     }
+
+    bool searchPoint(Point &point)
+    {
+        auto gridCoords = getGridCoords(point);
+        if (!grid.count(gridCoords)) return false;
+        
+        int pointIdx = grid[gridCoords];
+        if (points[pointIdx] == point) return true;
+
+        while(cellPointsList[pointIdx] != -1)
+        {
+            pointIdx = cellPointsList[pointIdx];
+            if (points[pointIdx] == point) return true;
+        }
+        return false;
+    }
 };
