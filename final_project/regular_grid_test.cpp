@@ -19,7 +19,7 @@ int main()
         std::vector<Point> pointList = Point::generateRandomPointList(i, STD_DEV);
         
         begin = std::chrono::steady_clock::now();
-        RegularGrid grid(pointList, STD_DEV/1000.0);
+        RegularGrid grid(pointList, 2.0);
         end = std::chrono::steady_clock::now();
         
         std::cout << "Construct grid time = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]\n";

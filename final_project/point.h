@@ -28,6 +28,7 @@ struct Point
         std::vector<Point> result(n);
         std::default_random_engine generator;
         std::normal_distribution<double> distribution(0.0, stdDev);
+        // std::uniform_real_distribution<double> distribution(-400, 400);
         for (int i = 0; i < n; i++)
         {
             // points with coordinates between 1 and maxCoord

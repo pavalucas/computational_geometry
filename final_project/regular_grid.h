@@ -4,6 +4,7 @@
 #include <limits>
 #include <map>
 #include <utility>
+#include <iostream>
 #include <vector>
 #include "point.h"
 
@@ -11,7 +12,7 @@ struct RegularGrid
 {
     std::vector<Point> points;
     std::map<std::pair<int, int>, int> grid;
-    int gridSizeX, gridSizeY;
+    long long int gridSizeX, gridSizeY;
     double cellSize, xmin, ymin, xmax, ymax;
     std::vector<int> cellPointsList;
 
@@ -29,7 +30,7 @@ struct RegularGrid
             xmin = std::min(xmin, p.coord[0]);
             xmax = std::max(xmax, p.coord[0]);
             ymin = std::min(ymin, p.coord[1]);
-            ymin = std::max(ymax, p.coord[1]);
+            ymax = std::max(ymax, p.coord[1]);
         }
 
         // saving width and height
@@ -55,9 +56,8 @@ struct RegularGrid
         {
             // store the point in the "linked list" of that his cell
             int nextPoint = grid[gridCoords];
-            while(cellPointsList[nextPoint] != -1)
-                nextPoint = cellPointsList[nextPoint];
-            cellPointsList[nextPoint] = pointIdx;
+            grid[gridCoords] = pointIdx;
+            cellPointsList[pointIdx] = nextPoint;
         }
         else
         {
