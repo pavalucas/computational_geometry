@@ -1,5 +1,6 @@
 #include <chrono>
 #include <iostream>
+#include <algorithm>
 #include "point.h"
 #include "regular_grid.h"
 
@@ -38,9 +39,12 @@ int main()
             else numPointNotInList++; 
         }
         end = std::chrono::steady_clock::now();
-        std::cout << "Search points = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]\n";
+        double totalSearchTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
+
+        std::cout << "Average point-search time = " << totalSearchTime/pointList.size() << "[ms]\n";
         std::cout << "Number of points in list = " << numPointInList << '\n';
         std::cout << "Number of points not in list = " << numPointNotInList << '\n';
+        std::cout << "------------------------------\n";
 
     }
     return 0;
