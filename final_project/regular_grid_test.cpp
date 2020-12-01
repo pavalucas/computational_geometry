@@ -2,7 +2,9 @@
 #include <iostream>
 #include <algorithm>
 #include "point.h"
-#include "regular_grid.h"
+#include "regular_grid/hash_regular_grid.h"
+#include "regular_grid/matrix_regular_grid.h"
+
 
 const int STD_DEV = 1e2;
 
@@ -19,7 +21,7 @@ int main()
         std::vector<Point> pointList = Point::generateRandomPointList(i, STD_DEV);
         
         begin = std::chrono::steady_clock::now();
-        RegularGrid grid(pointList, 2.0);
+        MatrixRegularGrid grid(pointList, 2.0);
         end = std::chrono::steady_clock::now();
         
         std::cout << "Construct grid time = " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]\n";
